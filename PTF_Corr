@@ -1,0 +1,62 @@
+import yfinance as yf
+import pandas as pd
+import numpy as np
+
+
+# Definisci la tabella con titoli e pesi
+portfolio = pd.DataFrame({
+   'Symbol': ['AAPL', 'NVDA', 'PLTR', 'O', 'TSLA', 'RACE', 'JNJ', 'PG'], # Sostituisci con i tuoi titoli
+   'Weight': [0.345, 0.282, 0.156, 0.073, 0.036, 0.036, 0.036, 0.036] # Sostituisci con i tuoi pesi
+})
+
+
+# Assicurati che la somma dei pesi sia 1
+if not np.isclose(portfolio['Weight'].sum(), 1):
+   print("Errore: La somma dei pesi deve essere uguale a 1.")
+else:
+   # Scarica i dati per l'ultimo anno
+   data = {}
+   for symbol in portfolio['Symbol']:
+       print(f"Scarico i dati per {symbol}...")
+       stock_data = yf.download(symbol, period="2y")['Adj Close']
+       data[symbol] = stock_data
+
+
+   # Crea un DataFrame con tutti i titoli
+   df = pd.DataFrame(data)
+
+
+   # Calcola i rendimenti giornalieri
+   daily_returns = df.pct_change().dropna()
+
+
+   # Calcola la matrice di covarianza
+   covariance_matrix = daily_returns.cov()
+
+
+   # Calcola la matrice di correlazione
+   correlation_matrix = daily_returns.corr()
+
+
+   # Calcola la varianza del portafoglio
+   weights = portfolio['Weight'].values
+   portfolio_variance = np.dot(weights.T, np.dot(covariance_matrix, weights))
+
+
+   # Calcola la correlazione media ponderata del portafoglio
+   portfolio_correlation = np.sum(
+       np.outer(weights, weights) * correlation_matrix.values
+   )
+
+
+   # Mostra i risultati
+   print("\nMatrice di covarianza:")
+   print(covariance_matrix)
+
+
+   print("\nMatrice di correlazione:")
+   print(correlation_matrix)
+
+
+   print(f"\nVarianza del portafoglio: {portfolio_variance:.6f}")
+   print(f"Correlazione media ponderata del portafoglio: {portfolio_correlation:.6f}")
